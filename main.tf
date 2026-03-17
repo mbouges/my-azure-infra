@@ -95,6 +95,18 @@ module "defender" {
 }
 
 # -----------------------------------------------------------------------------
+# GitHub Actions OIDC Identity (Entra ID)
+# -----------------------------------------------------------------------------
+module "github_oidc" {
+  source = "./modules/github-oidc"
+
+  project_name = var.project_name
+  environment  = var.environment
+  github_org   = var.github_org
+  github_repo  = var.github_repo
+}
+
+# -----------------------------------------------------------------------------
 # Budget Alert — notify when spending approaches limit
 # -----------------------------------------------------------------------------
 data "azurerm_subscription" "current" {}

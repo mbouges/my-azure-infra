@@ -54,3 +54,21 @@ output "log_analytics_workspace_name" {
   description = "Name of the Log Analytics workspace"
   value       = azurerm_log_analytics_workspace.main.name
 }
+
+# -----------------------------------------------------------------------------
+# GitHub Actions OIDC (set these as GitHub repository secrets)
+# -----------------------------------------------------------------------------
+output "github_actions_client_id" {
+  description = "AZURE_CLIENT_ID — set as GitHub Actions secret"
+  value       = module.github_oidc.client_id
+}
+
+output "github_actions_tenant_id" {
+  description = "AZURE_TENANT_ID — set as GitHub Actions secret"
+  value       = module.github_oidc.tenant_id
+}
+
+output "github_actions_subscription_id" {
+  description = "AZURE_SUBSCRIPTION_ID — set as GitHub Actions secret"
+  value       = module.github_oidc.subscription_id
+}

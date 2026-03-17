@@ -65,3 +65,15 @@ variable "allowed_vm_skus" {
     "Standard_B2als_v2",
   ]
 }
+
+variable "github_org" {
+  description = "GitHub organization or username owning the repository"
+  type        = string
+  default     = "mbouges"
+}
+
+variable "github_repo" {
+  description = "GitHub repository name for CI/CD OIDC trust"
+  type        = string
+  default     = "my-azure-infra"
+}
