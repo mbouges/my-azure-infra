@@ -1,0 +1,56 @@
+# -----------------------------------------------------------------------------
+# Resource Group
+# -----------------------------------------------------------------------------
+output "resource_group_name" {
+  description = "Name of the main resource group"
+  value       = azurerm_resource_group.main.name
+}
+
+output "resource_group_id" {
+  description = "ID of the main resource group"
+  value       = azurerm_resource_group.main.id
+}
+
+# -----------------------------------------------------------------------------
+# Networking
+# -----------------------------------------------------------------------------
+output "vnet_name" {
+  description = "Name of the virtual network"
+  value       = module.networking.vnet_name
+}
+
+output "vnet_id" {
+  description = "ID of the virtual network"
+  value       = module.networking.vnet_id
+}
+
+output "default_subnet_id" {
+  description = "ID of the default subnet"
+  value       = module.networking.default_subnet_id
+}
+
+# -----------------------------------------------------------------------------
+# Key Vault
+# -----------------------------------------------------------------------------
+output "key_vault_name" {
+  description = "Name of the Key Vault"
+  value       = module.keyvault.key_vault_name
+}
+
+output "key_vault_uri" {
+  description = "URI of the Key Vault"
+  value       = module.keyvault.key_vault_uri
+}
+
+# -----------------------------------------------------------------------------
+# Monitoring
+# -----------------------------------------------------------------------------
+output "log_analytics_workspace_id" {
+  description = "ID of the Log Analytics workspace"
+  value       = azurerm_log_analytics_workspace.main.id
+}
+
+output "log_analytics_workspace_name" {
+  description = "Name of the Log Analytics workspace"
+  value       = azurerm_log_analytics_workspace.main.name
+}
