@@ -43,8 +43,6 @@ resource "azurerm_subnet_network_security_group_association" "default" {
 
 # Enable diagnostic logging for the VNet to Log Analytics
 resource "azurerm_monitor_diagnostic_setting" "vnet" {
-  count = var.log_analytics_workspace_id != null ? 1 : 0
-
   name                       = "diag-${azurerm_virtual_network.this.name}"
   target_resource_id         = azurerm_virtual_network.this.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
@@ -56,8 +54,6 @@ resource "azurerm_monitor_diagnostic_setting" "vnet" {
 
 # Enable diagnostic logging for the NSG (flow analytics)
 resource "azurerm_monitor_diagnostic_setting" "nsg" {
-  count = var.log_analytics_workspace_id != null ? 1 : 0
-
   name                       = "diag-${azurerm_network_security_group.default.name}"
   target_resource_id         = azurerm_network_security_group.default.id
   log_analytics_workspace_id = var.log_analytics_workspace_id

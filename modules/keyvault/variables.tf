@@ -24,9 +24,8 @@ variable "resource_group_name" {
 }
 
 variable "log_analytics_workspace_id" {
-  description = "ID of the Log Analytics workspace for diagnostic logs (optional)"
+  description = "ID of the Log Analytics workspace for diagnostic logs"
   type        = string
-  default     = null
 }
 
 variable "tags" {

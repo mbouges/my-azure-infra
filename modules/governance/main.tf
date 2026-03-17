@@ -31,9 +31,9 @@ resource "azurerm_subscription_policy_assignment" "require_managed_by_tag_rg" {
 # --- Inherit tags from resource group ---
 resource "azurerm_subscription_policy_assignment" "inherit_env_tag" {
   name                 = "inherit-environment-tag"
-  display_name         = "Inherit 'environment' tag from resource group"
+  display_name         = "Inherit 'environment' tag from resource group if missing"
   subscription_id      = data.azurerm_subscription.current.id
-  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/ea3f2387-9b95-492a-a190-fcbbd9b1df7f"
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/cd3aa116-8754-49c9-a813-ad46512ece54"
   location             = var.location # Required for managed identity
 
   identity {
@@ -47,9 +47,9 @@ resource "azurerm_subscription_policy_assignment" "inherit_env_tag" {
 
 resource "azurerm_subscription_policy_assignment" "inherit_managed_by_tag" {
   name                 = "inherit-managed-by-tag"
-  display_name         = "Inherit 'managed_by' tag from resource group"
+  display_name         = "Inherit 'managed_by' tag from resource group if missing"
   subscription_id      = data.azurerm_subscription.current.id
-  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/ea3f2387-9b95-492a-a190-fcbbd9b1df7f"
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/cd3aa116-8754-49c9-a813-ad46512ece54"
   location             = var.location # Required for managed identity
 
   identity {

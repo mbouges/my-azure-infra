@@ -37,7 +37,6 @@ variable "tags" {
 }
 
 variable "log_analytics_workspace_id" {
-  description = "ID of the Log Analytics workspace for diagnostic logs (optional)"
+  description = "ID of the Log Analytics workspace for diagnostic logs"
   type        = string
-  default     = null
 }

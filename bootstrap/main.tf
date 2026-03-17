@@ -6,18 +6,30 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 }
 
 provider "azurerm" {
   features {}
+  resource_provider_registrations = "none"
+}
+
+# Random suffix to ensure globally unique storage account name
+resource "random_string" "suffix" {
+  length  = 4
+  special = false
+  upper   = false
 }
 
 locals {
   region_abbr = "eus2"
   # Naming follows Azure CAF: https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming
   resource_group_name  = "rg-tfstate-${var.environment}-${var.location}"
-  storage_account_name = "sttfstate${var.environment}${local.region_abbr}"
+  storage_account_name = "sttfstate${var.environment}${local.region_abbr}${random_string.suffix.result}"
   container_name       = "tfstate"
 
   tags = {

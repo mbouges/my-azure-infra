@@ -25,10 +25,8 @@ resource "azurerm_role_assignment" "kv_admin" {
   principal_id         = data.azurerm_client_config.current.object_id
 }
 
-# Enable diagnostic logging to Log Analytics if workspace ID is provided
+# Enable diagnostic logging to Log Analytics
 resource "azurerm_monitor_diagnostic_setting" "kv" {
-  count = var.log_analytics_workspace_id != null ? 1 : 0
-
   name                       = "diag-${azurerm_key_vault.this.name}"
   target_resource_id         = azurerm_key_vault.this.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
