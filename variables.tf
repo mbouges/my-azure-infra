@@ -89,7 +89,25 @@ variable "owner_object_id" {
 variable "vm_size" {
   description = "Azure VM size for the dev VM"
   type        = string
-  default     = "Standard_B2s"
+  default     = "Standard_D2s_v3"
+}
+
+variable "vm_location" {
+  description = "Azure region for the dev VM (separate from main infra region)"
+  type        = string
+  default     = "centralus"
+}
+
+variable "vm_address_space" {
+  description = "Address space for the VM VNet in the VM region"
+  type        = string
+  default     = "10.1.0.0/16"
+}
+
+variable "vm_subnet_prefix" {
+  description = "Subnet prefix for the VM subnet in the VM region"
+  type        = string
+  default     = "10.1.1.0/24"
 }
 
 variable "allowed_rdp_source_ip" {

@@ -8,6 +8,11 @@ output "vm_name" {
   value       = azurerm_windows_virtual_machine.this.name
 }
 
+output "resource_group_name" {
+  description = "Name of the VM resource group"
+  value       = azurerm_resource_group.vm.name
+}
+
 output "public_ip_address" {
   description = "Public IP address of the VM"
   value       = azurerm_public_ip.vm.ip_address
