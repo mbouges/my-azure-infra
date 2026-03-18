@@ -10,51 +10,62 @@ This project implements a lightweight version of the [Azure Cloud Adoption Frame
 |---|---|---|
 | **Naming & Tagging** | Azure CAF naming convention; enforced tag taxonomy (`environment`, `managed_by`, `owner`, `cost_center`) | Free |
 | **Governance** | Azure Policy: require tags on RGs, inherit tags to resources, restrict allowed regions, restrict VM SKUs, require secure storage | Free |
-| **Security** | Microsoft Defender for Cloud (free tier), Key Vault RBAC, NSG deny-all-inbound, TLS 1.2 enforced | Free |
+| **Security** | Microsoft Defender for Cloud (free tier), Key Vault RBAC, NSG deny-all-inbound, TLS 1.2 enforced, Trusted Launch VMs | Free |
 | **Identity** | Key Vault with RBAC authorization, Entra ID OIDC for CI/CD (no secrets) | Free |
-| **Networking** | VNet with subnet isolation, NSG with deny-all-inbound default | Free |
+| **Networking** | VNets with subnet isolation, NSGs with deny-all-inbound default (multi-region) | Free |
 | **Monitoring** | Log Analytics (500 MB/day cap), diagnostic settings on VNet, NSG, Key Vault | Free |
-| **Cost Management** | $10/month budget with alerts at 50%, 80%, 100% (forecasted) | Free |
+| **Cost Management** | $10/month budget with alerts at 50%, 80%, 100% (forecasted); auto-shutdown VM | Free |
 | **State Management** | Remote Terraform state in Azure Storage with blob versioning | ~$0.02/mo |
 | **CI/CD** | GitHub Actions with OIDC federated identity, plan on PR, apply on merge | Free |
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  Azure Subscription (Personal)                               │
-│                                                              │
-│  ┌─ Subscription-Level Governance ────────────────────────┐  │
-│  │  Azure Policy: Require tags, allowed locations/VM SKUs │  │
-│  │  Defender for Cloud: Free tier (CSPM)                  │  │
-│  │  Budget Alert: $10/month (50% / 80% / 100%)            │  │
-│  └────────────────────────────────────────────────────────┘  │
-│                                                              │
-│  ┌─ Entra ID ────────────────────────────────────────────┐  │
-│  │  App Registration: sp-personal-github-actions-dev      │  │
-│  │  Federated Credentials: PR, main branch, production    │  │
-│  │  Roles: Contributor, User Access Admin, Blob Data      │  │
-│  └────────────────────────────────────────────────────────┘  │
-│                                                              │
-│  ┌─ rg-personal-dev-eastus2 ─────────────────────────────┐  │
-│  │                                                        │  │
-│  │  ┌─ vnet-personal-dev-eastus2 (10.0.0.0/16) ───────┐  │  │
-│  │  │                                                   │  │  │
-│  │  │  ┌─ snet-default-dev-eastus2 (10.0.1.0/24) ──┐  │  │  │
-│  │  │  │  NSG: nsg-default-dev-eastus2              │  │  │  │
-│  │  │  │  Rule: Deny all inbound from Internet      │  │  │  │
-│  │  │  └────────────────────────────────────────────┘  │  │  │
-│  │  └──────────────────────────────────────────────────┘  │  │
-│  │                                                        │  │
-│  │  Key Vault:      kv-personal-dev-eus2  (RBAC, diags)  │  │
-│  │  Log Analytics:  log-personal-dev-eastus2 (500MB cap)  │  │
-│  └────────────────────────────────────────────────────────┘  │
-│                                                              │
-│  ┌─ rg-tfstate-dev-eastus2 (Bootstrap) ──────────────────┐  │
-│  │  Storage: sttfstatedeveus221b6 (LRS, TLS 1.2, ver.)   │  │
-│  │  Container: tfstate                                    │  │
-│  └────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  Azure Subscription (Personal)                                   │
+│                                                                  │
+│  ┌─ Subscription-Level Governance ────────────────────────────┐  │
+│  │  Azure Policy: Require tags, allowed locations/VM SKUs     │  │
+│  │  Defender for Cloud: Free tier (CSPM)                      │  │
+│  │  Budget Alert: $10/month (50% / 80% / 100%)               │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌─ Entra ID ────────────────────────────────────────────────┐  │
+│  │  App Registration: sp-personal-github-actions-dev          │  │
+│  │  Federated Credentials: PR, main branch, production env   │  │
+│  │  Roles: Contributor, User Access Admin, Blob Data,        │  │
+│  │         Key Vault Secrets Officer                          │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌─ rg-personal-dev-eastus2 ─────────────────────────────────┐  │
+│  │                                                            │  │
+│  │  ┌─ vnet-personal-dev-eastus2 (10.0.0.0/16) ───────────┐  │  │
+│  │  │  └─ snet-default-dev-eastus2 (10.0.1.0/24)          │  │  │
+│  │  │     NSG: nsg-default-dev-eastus2 (deny all inbound)  │  │  │
+│  │  └──────────────────────────────────────────────────────┘  │  │
+│  │                                                            │  │
+│  │  Key Vault:     kv-personal-dev-eus2 (RBAC, diagnostics)  │  │
+│  │  Log Analytics: log-personal-dev-eastus2 (500MB/day cap)  │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌─ rg-personal-vm-dev-centralus ────────────────────────────┐  │
+│  │                                                            │  │
+│  │  ┌─ vnet-personal-vm-dev-centralus (10.1.0.0/16) ──────┐  │  │
+│  │  │  └─ snet-vm-dev-centralus (10.1.1.0/24)             │  │  │
+│  │  │     NSG: nsg-vm-dev-centralus (deny all + allow RDP) │  │  │
+│  │  └──────────────────────────────────────────────────────┘  │  │
+│  │                                                            │  │
+│  │  VM:  vm-personal-dev-centralus (Standard_D2s_v3)         │  │
+│  │       Windows 11 24H2 Ent, Trusted Launch, auto-shutdown  │  │
+│  │  NIC: nic-vm-personal-dev-centralus                       │  │
+│  │  PIP: pip-vm-personal-dev-centralus (Static, Standard)    │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌─ rg-tfstate-dev-eastus2 (Bootstrap) ──────────────────────┐  │
+│  │  Storage: sttfstatedeveus221b6 (LRS, TLS 1.2, versioned) │  │
+│  │  Container: tfstate                                        │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ## Project Structure
@@ -72,9 +83,10 @@ my-azure-infra/
 │   └── outputs.tf
 ├── modules/
 │   ├── networking/             # VNet, subnet, NSG, diagnostic settings
-│   ├── keyvault/               # Key Vault, RBAC role, diagnostic settings
+│   ├── keyvault/               # Key Vault (RBAC auth), role assignment, diagnostics
 │   ├── governance/             # 7 Azure Policy assignments
 │   ├── defender/               # Defender free tier, security contact
+│   ├── compute/                # Windows 11 VM (self-contained: RG, VNet, subnet, NSG)
 │   └── github-oidc/            # Entra ID app, federated creds, role assignments
 ├── main.tf                     # Root module — resource group, Log Analytics, modules, budget
 ├── variables.tf                # Input variables with defaults
@@ -84,6 +96,32 @@ my-azure-infra/
 ├── terraform.tfvars            # Variable values
 └── .gitignore
 ```
+
+## Modules
+
+### networking
+VNet, subnet, NSG with deny-all-inbound, diagnostic settings to Log Analytics. Deployed in eastus2.
+
+### keyvault
+Key Vault with RBAC authorization enabled (`rbac_authorization_enabled = true`), Key Vault Administrator role for the owner, diagnostic logging (AuditEvent) to Log Analytics.
+
+### governance
+7 Azure Policy assignments: require `environment` and `managed_by` tags on resource groups, inherit tags to resources, restrict allowed regions (eastus2, eastus, centralus), restrict VM SKUs to cost-effective sizes, require secure transfer on storage.
+
+### defender
+Microsoft Defender for Cloud free tier for VMs, Storage, Key Vaults, and ARM. Security contact email notifications.
+
+### compute
+Self-contained Windows 11 development VM in centralus. Creates its own resource group, VNet (10.1.0.0/16), subnet (10.1.1.0/24), and NSG. Features:
+- **SKU**: Standard_D2s_v3 (2 vCPU, 8 GB RAM)
+- **OS**: Windows 11 24H2 Enterprise, Trusted Launch (secure boot + vTPM)
+- **Storage**: 128 GB StandardSSD
+- **Security**: NSG deny-all-inbound + allow RDP from specific IP only
+- **Cost control**: Auto-shutdown at 7 PM CT daily
+- **Credentials**: Admin password stored in Key Vault (eastus2)
+
+### github-oidc
+Entra ID app registration with 3 federated identity credentials (PR, main branch, production environment). Service principal with Contributor, User Access Administrator, Storage Blob Data Contributor, and Key Vault Secrets Officer roles at subscription scope.
 
 ## CI/CD Pipeline
 
@@ -124,9 +162,13 @@ Follows [Azure CAF naming convention](https://learn.microsoft.com/en-us/azure/cl
 | Resource           | Pattern                           | Example                      |
 | ------------------ | --------------------------------- | ---------------------------- |
 | Resource Group     | `rg-<workload>-<env>-<region>`    | `rg-personal-dev-eastus2`   |
+| Resource Group (VM)| `rg-<workload>-vm-<env>-<region>` | `rg-personal-vm-dev-centralus` |
 | Virtual Network    | `vnet-<workload>-<env>-<region>`  | `vnet-personal-dev-eastus2` |
 | Subnet             | `snet-<purpose>-<env>-<region>`   | `snet-default-dev-eastus2`  |
 | NSG                | `nsg-<purpose>-<env>-<region>`    | `nsg-default-dev-eastus2`   |
+| Virtual Machine    | `vm-<workload>-<env>-<region>`    | `vm-personal-dev-centralus` |
+| Public IP          | `pip-<parent>`                    | `pip-vm-personal-dev-centralus` |
+| NIC                | `nic-<parent>`                    | `nic-vm-personal-dev-centralus` |
 | Storage Account    | `st<workload><env><region_abbr><suffix>`  | `sttfstatedeveus221b6` |
 | Key Vault          | `kv-<workload>-<env>-<region_abbr>` | `kv-personal-dev-eus2`    |
 | Log Analytics      | `log-<workload>-<env>-<region>`   | `log-personal-dev-eastus2`  |
@@ -182,13 +224,28 @@ Set these as repository secrets (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SU
 
 Create a `production` environment in **Settings → Environments** for the apply workflow.
 
+### 6. Connect to the Dev VM
+
+Retrieve the admin password from Key Vault and RDP to the VM:
+
+```bash
+# Get the VM public IP
+terraform output vm_public_ip
+
+# Get the admin password from Key Vault
+az keyvault secret show --vault-name kv-personal-dev-eus2 \
+  --name vm-personal-dev-centralus-admin-password --query value -o tsv
+```
+
+Connect via RDP to the public IP with username `azureadmin`.
+
 ## Cost Estimate
 
 | Resource                | Monthly Cost |
 | ----------------------- | ------------ |
-| Resource Group          | Free         |
-| Virtual Network         | Free         |
-| Subnet + NSG            | Free         |
+| Resource Groups (x2)    | Free         |
+| Virtual Networks (x2)   | Free         |
+| Subnets + NSGs (x2)     | Free         |
 | Key Vault (Standard)    | ~$0.03/key   |
 | Log Analytics (500MB)   | Free         |
 | Diagnostic Settings     | Free         |
@@ -198,6 +255,11 @@ Create a `production` environment in **Settings → Environments** for the apply
 | Budget Alerts           | Free         |
 | Entra ID App + SP       | Free         |
 | GitHub Actions (public) | Free         |
+| **VM: Standard_D2s_v3** | **~$96** (auto-shutdown reduces actual cost) |
+| Public IP (Standard)    | ~$3.65       |
+| OS Disk (128GB SSD)     | ~$9.60       |
+| **Total (VM running 24/7)** | **~$109/mo** |
+| **Total (VM ~8hr/day)**     | **~$45/mo**  |
 | **Total**               | **< $1/mo**  |
 
 ## Variables
