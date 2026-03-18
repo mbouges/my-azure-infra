@@ -64,11 +64,6 @@ variable "os_disk_size_gb" {
   default     = 128
 }
 
-variable "allowed_rdp_source_ip" {
-  description = "Public IP address allowed to RDP into the VM (CIDR, e.g. 1.2.3.4/32). Use 'Internet' to allow all (not recommended)."
-  type        = string
-}
-
 variable "auto_shutdown_time" {
   description = "Daily auto-shutdown time in HHmm format (24hr, e.g. 1900 = 7 PM)"
   type        = string
