@@ -24,7 +24,7 @@ github_repo     = "my-azure-infra"
 owner_object_id = "b53807db-aa6a-4e20-a1f6-7e0e93236c08"
 
 # Dev VM
-vm_size                = "Standard_D2as_v5" # B2ms unavailable in eastus2; D2as_v5 is AMD 2vCPU/8GB
+vm_size                = "Standard_B2s" # B-series has default quota; 2 vCPU / 4 GB RAM
 allowed_rdp_source_ip  = "130.41.167.163/32" # UPDATE: Your public IP for RDP access
 auto_shutdown_time     = "1900"              # 7 PM CT daily
 auto_shutdown_timezone = "Central Standard Time"
