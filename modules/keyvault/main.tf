@@ -4,6 +4,7 @@ resource "azurerm_key_vault" "this" {
   resource_group_name        = var.resource_group_name
   tenant_id                  = var.tenant_id
   sku_name                   = "standard" # Cost-optimized: standard tier
+  rbac_authorization_enabled = true       # Use Azure RBAC for data-plane access (required for SP access)
   purge_protection_enabled   = false      # Personal env — allow cleanup
   soft_delete_retention_days = 7          # Minimum retention to reduce accidental cost
 
