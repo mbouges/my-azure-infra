@@ -72,3 +72,21 @@ output "github_actions_subscription_id" {
   description = "AZURE_SUBSCRIPTION_ID — set as GitHub Actions secret"
   value       = module.github_oidc.subscription_id
 }
+
+# -----------------------------------------------------------------------------
+# Dev VM
+# -----------------------------------------------------------------------------
+output "vm_public_ip" {
+  description = "Public IP of the dev VM — use for RDP connection"
+  value       = module.compute.public_ip_address
+}
+
+output "vm_admin_username" {
+  description = "Admin username for RDP"
+  value       = module.compute.admin_username
+}
+
+output "vm_admin_password_secret" {
+  description = "Key Vault secret name containing the admin password"
+  value       = module.compute.admin_password_secret_name
+}

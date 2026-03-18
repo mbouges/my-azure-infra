@@ -82,3 +82,29 @@ variable "owner_object_id" {
   description = "Entra ID object ID of the user who owns the OIDC app registration"
   type        = string
 }
+
+# -----------------------------------------------------------------------------
+# Compute — Windows 11 Dev VM
+# -----------------------------------------------------------------------------
+variable "vm_size" {
+  description = "Azure VM size for the dev VM"
+  type        = string
+  default     = "Standard_B2ms"
+}
+
+variable "allowed_rdp_source_ip" {
+  description = "Public IP allowed to RDP (CIDR, e.g. 203.0.113.5/32)"
+  type        = string
+}
+
+variable "auto_shutdown_time" {
+  description = "Daily auto-shutdown time in HHmm format (24hr)"
+  type        = string
+  default     = "1900"
+}
+
+variable "auto_shutdown_timezone" {
+  description = "Timezone for auto-shutdown"
+  type        = string
+  default     = "Central Standard Time"
+}
