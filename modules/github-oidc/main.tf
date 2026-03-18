@@ -90,3 +90,10 @@ resource "azurerm_role_assignment" "storage_blob_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azuread_service_principal.github_actions.object_id
 }
+
+# Key Vault Secrets Officer: manage secrets (e.g., VM admin passwords)
+resource "azurerm_role_assignment" "keyvault_secrets_officer" {
+  scope                = data.azurerm_subscription.current.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = azuread_service_principal.github_actions.object_id
+}

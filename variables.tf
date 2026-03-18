@@ -89,7 +89,7 @@ variable "owner_object_id" {
 variable "vm_size" {
   description = "Azure VM size for the dev VM"
   type        = string
-  default     = "Standard_D2as_v5"
+  default     = "Standard_B2s"
 }
 
 variable "allowed_rdp_source_ip" {

@@ -41,7 +41,7 @@ variable "log_analytics_workspace_id" {
 variable "vm_size" {
   description = "Azure VM size (B-series recommended for cost)"
   type        = string
-  default     = "Standard_D2as_v5"
+  default     = "Standard_B2s"
 }
 
 variable "admin_username" {
