@@ -110,11 +110,6 @@ variable "vm_subnet_prefix" {
   default     = "10.1.1.0/24"
 }
 
-variable "allowed_rdp_source_ip" {
-  description = "Public IP allowed to RDP (CIDR, e.g. 203.0.113.5/32)"
-  type        = string
-}
-
 variable "auto_shutdown_time" {
   description = "Daily auto-shutdown time in HHmm format (24hr)"
   type        = string
