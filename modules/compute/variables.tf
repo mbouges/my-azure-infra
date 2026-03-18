@@ -1,3 +1,13 @@
+variable "project_name" {
+  description = "Project or workload name used in resource naming"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name (e.g., dev, staging, prod)"
+  type        = string
+}
+
 variable "vm_name" {
   description = "Name of the virtual machine (CAF: vm-<workload>-<env>-<region>)"
   type        = string
@@ -9,39 +19,31 @@ variable "computer_name" {
 }
 
 variable "location" {
-  description = "Azure region"
-  type        = string
-}
-
-variable "resource_group_name" {
-  description = "Name of the resource group"
-  type        = string
-}
-
-variable "subnet_id" {
-  description = "ID of the subnet to attach the VM NIC to"
-  type        = string
-}
-
-variable "nsg_name" {
-  description = "Name of the NSG to add the RDP allow rule to"
+  description = "Azure region for the VM and its networking"
   type        = string
 }
 
 variable "key_vault_id" {
-  description = "ID of the Key Vault to store admin password"
+  description = "ID of the Key Vault to store admin password (can be in a different region)"
   type        = string
 }
 
-variable "log_analytics_workspace_id" {
-  description = "ID of the Log Analytics workspace for diagnostics"
+variable "address_space" {
+  description = "Address space for the VM VNet (CIDR notation)"
   type        = string
+  default     = "10.1.0.0/16"
+}
+
+variable "subnet_prefix" {
+  description = "Address prefix for the VM subnet (CIDR notation)"
+  type        = string
+  default     = "10.1.1.0/24"
 }
 
 variable "vm_size" {
-  description = "Azure VM size (B-series recommended for cost)"
+  description = "Azure VM size"
   type        = string
-  default     = "Standard_B2s"
+  default     = "Standard_D2s_v3"
 }
 
 variable "admin_username" {

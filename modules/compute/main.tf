@@ -1,8 +1,9 @@
 # -----------------------------------------------------------------------------
 # Windows 11 VM for IDE / Development
-# Cost-optimized: B-series burstable, Standard SSD, auto-shutdown
+# Self-contained in its own region: creates RG, VNet, subnet, NSG
+# Cost-optimized: auto-shutdown, Standard SSD
 # Trusted Launch enabled (required for Windows 11)
-# Admin password stored in Key Vault
+# Admin password stored in Key Vault (in primary region)
 # -----------------------------------------------------------------------------
 
 resource "random_password" "admin" {
@@ -17,11 +18,76 @@ resource "azurerm_key_vault_secret" "admin_password" {
   key_vault_id = var.key_vault_id
 }
 
+# --- Resource Group (in VM region) ---
+resource "azurerm_resource_group" "vm" {
+  name     = "rg-${var.project_name}-vm-${var.environment}-${var.location}"
+  location = var.location
+  tags     = var.tags
+}
+
+# --- VNet ---
+resource "azurerm_virtual_network" "vm" {
+  name                = "vnet-${var.project_name}-vm-${var.environment}-${var.location}"
+  location            = azurerm_resource_group.vm.location
+  resource_group_name = azurerm_resource_group.vm.name
+  address_space       = [var.address_space]
+  tags                = var.tags
+}
+
+# --- Subnet ---
+resource "azurerm_subnet" "vm" {
+  name                 = "snet-vm-${var.environment}-${var.location}"
+  resource_group_name  = azurerm_resource_group.vm.name
+  virtual_network_name = azurerm_virtual_network.vm.name
+  address_prefixes     = [var.subnet_prefix]
+}
+
+# --- NSG ---
+resource "azurerm_network_security_group" "vm" {
+  name                = "nsg-vm-${var.environment}-${var.location}"
+  location            = azurerm_resource_group.vm.location
+  resource_group_name = azurerm_resource_group.vm.name
+  tags                = var.tags
+}
+
+resource "azurerm_network_security_rule" "deny_all_inbound" {
+  name                        = "DenyAllInbound"
+  priority                    = 4096
+  direction                   = "Inbound"
+  access                      = "Deny"
+  protocol                    = "*"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = "Internet"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.vm.name
+  network_security_group_name = azurerm_network_security_group.vm.name
+}
+
+resource "azurerm_network_security_rule" "allow_rdp" {
+  name                        = "AllowRDP"
+  priority                    = 200
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "3389"
+  source_address_prefix       = var.allowed_rdp_source_ip
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.vm.name
+  network_security_group_name = azurerm_network_security_group.vm.name
+}
+
+resource "azurerm_subnet_network_security_group_association" "vm" {
+  subnet_id                 = azurerm_subnet.vm.id
+  network_security_group_id = azurerm_network_security_group.vm.id
+}
+
 # --- Public IP ---
 resource "azurerm_public_ip" "vm" {
   name                = "pip-${var.vm_name}"
-  location            = var.location
-  resource_group_name = var.resource_group_name
+  location            = azurerm_resource_group.vm.location
+  resource_group_name = azurerm_resource_group.vm.name
   allocation_method   = "Static"
   sku                 = "Standard"
   tags                = var.tags
@@ -30,38 +96,23 @@ resource "azurerm_public_ip" "vm" {
 # --- NIC ---
 resource "azurerm_network_interface" "vm" {
   name                = "nic-${var.vm_name}"
-  location            = var.location
-  resource_group_name = var.resource_group_name
+  location            = azurerm_resource_group.vm.location
+  resource_group_name = azurerm_resource_group.vm.name
   tags                = var.tags
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = var.subnet_id
+    subnet_id                     = azurerm_subnet.vm.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.vm.id
   }
 }
 
-# --- NSG Rule: Allow RDP from specific IP ---
-resource "azurerm_network_security_rule" "allow_rdp" {
-  name                        = "AllowRDP-${var.vm_name}"
-  priority                    = 200
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  destination_port_range      = "3389"
-  source_address_prefix       = var.allowed_rdp_source_ip
-  destination_address_prefix  = azurerm_network_interface.vm.private_ip_address
-  resource_group_name         = var.resource_group_name
-  network_security_group_name = var.nsg_name
-}
-
 # --- Windows 11 VM ---
 resource "azurerm_windows_virtual_machine" "this" {
   name                  = var.vm_name
-  location              = var.location
-  resource_group_name   = var.resource_group_name
+  location              = azurerm_resource_group.vm.location
+  resource_group_name   = azurerm_resource_group.vm.name
   size                  = var.vm_size
   admin_username        = var.admin_username
   admin_password        = random_password.admin.result
@@ -87,7 +138,6 @@ resource "azurerm_windows_virtual_machine" "this" {
     version   = "latest"
   }
 
-  # Auto-shutdown to save cost
   lifecycle {
     ignore_changes = [admin_password]
   }
@@ -106,15 +156,4 @@ resource "azurerm_dev_test_global_vm_shutdown_schedule" "this" {
   }
 
   tags = var.tags
-}
-
-# --- Diagnostic settings for NIC ---
-resource "azurerm_monitor_diagnostic_setting" "nic" {
-  name                       = "diag-${azurerm_network_interface.vm.name}"
-  target_resource_id         = azurerm_network_interface.vm.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
-
-  enabled_metric {
-    category = "AllMetrics"
-  }
 }
