@@ -22,3 +22,8 @@ allowed_locations = ["eastus2", "eastus"]
 github_org      = "mbouges"
 github_repo     = "my-azure-infra"
 owner_object_id = "b53807db-aa6a-4e20-a1f6-7e0e93236c08"
+
+# Dev VM
+allowed_rdp_source_ip  = "130.41.167.163/32" # UPDATE: Your public IP for RDP access
+auto_shutdown_time     = "1900"              # 7 PM CT daily
+auto_shutdown_timezone = "Central Standard Time"

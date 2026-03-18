@@ -110,6 +110,27 @@ module "github_oidc" {
 }
 
 # -----------------------------------------------------------------------------
+# Windows 11 Dev VM (cost-optimized: B-series, auto-shutdown, Standard SSD)
+# -----------------------------------------------------------------------------
+module "compute" {
+  source = "./modules/compute"
+
+  vm_name                    = "vm-${var.project_name}-${var.environment}-${var.location}"
+  computer_name              = "dev-ide" # Max 15 chars
+  location                   = azurerm_resource_group.main.location
+  resource_group_name        = azurerm_resource_group.main.name
+  subnet_id                  = module.networking.default_subnet_id
+  nsg_name                   = "nsg-default-${var.environment}-${var.location}"
+  key_vault_id               = module.keyvault.key_vault_id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+  vm_size                    = var.vm_size
+  allowed_rdp_source_ip      = var.allowed_rdp_source_ip
+  auto_shutdown_time         = var.auto_shutdown_time
+  auto_shutdown_timezone     = var.auto_shutdown_timezone
+  tags                       = local.tags
+}
+
+# -----------------------------------------------------------------------------
 # Budget Alert — notify when spending approaches limit
 # -----------------------------------------------------------------------------
 data "azurerm_subscription" "current" {}
