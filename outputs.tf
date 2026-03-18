@@ -76,9 +76,9 @@ output "github_actions_subscription_id" {
 # -----------------------------------------------------------------------------
 # Dev VM
 # -----------------------------------------------------------------------------
-output "vm_public_ip" {
-  description = "Public IP of the dev VM — use for RDP connection"
-  value       = module.compute.public_ip_address
+output "vm_bastion_name" {
+  description = "Bastion host name — connect via Azure portal"
+  value       = module.compute.bastion_name
 }
 
 output "vm_admin_username" {

@@ -28,6 +28,5 @@ vm_size                = "Standard_D2s_v3" # D-series v3; 2 vCPU / 8 GB RAM
 vm_location            = "centralus"       # Separate region — SKU availability
 vm_address_space       = "10.1.0.0/16"
 vm_subnet_prefix       = "10.1.1.0/24"
-allowed_rdp_source_ip  = "130.41.167.163/32" # UPDATE: Your public IP for RDP access
 auto_shutdown_time     = "1900"              # 7 PM CT daily
 auto_shutdown_timezone = "Central Standard Time"

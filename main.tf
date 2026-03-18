@@ -124,7 +124,6 @@ module "compute" {
   address_space         = var.vm_address_space
   subnet_prefix         = var.vm_subnet_prefix
   vm_size               = var.vm_size
-  allowed_rdp_source_ip = var.allowed_rdp_source_ip
   auto_shutdown_time    = var.auto_shutdown_time
   auto_shutdown_timezone = var.auto_shutdown_timezone
   tags                  = local.tags

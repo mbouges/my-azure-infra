@@ -13,11 +13,6 @@ output "resource_group_name" {
   value       = azurerm_resource_group.vm.name
 }
 
-output "public_ip_address" {
-  description = "Public IP address of the VM"
-  value       = azurerm_public_ip.vm.ip_address
-}
-
 output "private_ip_address" {
   description = "Private IP address of the VM"
   value       = azurerm_network_interface.vm.private_ip_address
@@ -31,4 +26,9 @@ output "admin_username" {
 output "admin_password_secret_name" {
   description = "Key Vault secret name containing the admin password"
   value       = azurerm_key_vault_secret.admin_password.name
+}
+
+output "bastion_name" {
+  description = "Name of the Bastion host (connect via Azure portal)"
+  value       = azurerm_bastion_host.vm.name
 }

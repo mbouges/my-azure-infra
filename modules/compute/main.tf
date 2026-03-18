@@ -64,36 +64,22 @@ resource "azurerm_network_security_rule" "deny_all_inbound" {
   network_security_group_name = azurerm_network_security_group.vm.name
 }
 
-resource "azurerm_network_security_rule" "allow_rdp" {
-  name                        = "AllowRDP"
-  priority                    = 200
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  destination_port_range      = "3389"
-  source_address_prefix       = var.allowed_rdp_source_ip
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.vm.name
-  network_security_group_name = azurerm_network_security_group.vm.name
-}
-
 resource "azurerm_subnet_network_security_group_association" "vm" {
   subnet_id                 = azurerm_subnet.vm.id
   network_security_group_id = azurerm_network_security_group.vm.id
 }
 
-# --- Public IP ---
-resource "azurerm_public_ip" "vm" {
-  name                = "pip-${var.vm_name}"
+# --- Azure Bastion Developer (free SKU — browser-based RDP via Azure portal) ---
+resource "azurerm_bastion_host" "vm" {
+  name                = "bas-${var.project_name}-vm-${var.environment}-${var.location}"
   location            = azurerm_resource_group.vm.location
   resource_group_name = azurerm_resource_group.vm.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
+  sku                 = "Developer"
+  virtual_network_id  = azurerm_virtual_network.vm.id
   tags                = var.tags
 }
 
-# --- NIC ---
+# --- NIC (private only — Bastion provides secure access) ---
 resource "azurerm_network_interface" "vm" {
   name                = "nic-${var.vm_name}"
   location            = azurerm_resource_group.vm.location
@@ -104,7 +90,6 @@ resource "azurerm_network_interface" "vm" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.vm.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.vm.id
   }
 }
 
