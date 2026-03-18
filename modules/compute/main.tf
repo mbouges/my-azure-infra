@@ -50,15 +50,15 @@ resource "azurerm_network_security_group" "vm" {
   tags                = var.tags
 }
 
-resource "azurerm_network_security_rule" "deny_all_inbound" {
-  name                        = "DenyAllInbound"
-  priority                    = 4096
+resource "azurerm_network_security_rule" "allow_bastion_rdp" {
+  name                        = "AllowBastionRDP"
+  priority                    = 200
   direction                   = "Inbound"
-  access                      = "Deny"
-  protocol                    = "*"
+  access                      = "Allow"
+  protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "Internet"
+  destination_port_range      = "3389"
+  source_address_prefix       = "168.63.129.16/32"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.vm.name
   network_security_group_name = azurerm_network_security_group.vm.name
