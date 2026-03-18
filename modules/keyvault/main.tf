@@ -1,10 +1,8 @@
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_key_vault" "this" {
   name                       = "kv-${var.project_name}-${var.environment}-${var.region_abbr}"
   location                   = var.location
   resource_group_name        = var.resource_group_name
-  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  tenant_id                  = var.tenant_id
   sku_name                   = "standard" # Cost-optimized: standard tier
   purge_protection_enabled   = false      # Personal env — allow cleanup
   soft_delete_retention_days = 7          # Minimum retention to reduce accidental cost
@@ -22,7 +20,7 @@ resource "azurerm_key_vault" "this" {
 resource "azurerm_role_assignment" "kv_admin" {
   scope                = azurerm_key_vault.this.id
   role_definition_name = "Key Vault Administrator"
-  principal_id         = data.azurerm_client_config.current.object_id
+  principal_id         = var.owner_object_id
 }
 
 # Enable diagnostic logging to Log Analytics

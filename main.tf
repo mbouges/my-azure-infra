@@ -72,6 +72,8 @@ module "keyvault" {
   resource_group_name        = azurerm_resource_group.main.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
   tags                       = local.tags
+  owner_object_id            = var.owner_object_id
+  tenant_id                  = data.azurerm_subscription.current.tenant_id
 }
 
 # -----------------------------------------------------------------------------
@@ -100,10 +102,11 @@ module "defender" {
 module "github_oidc" {
   source = "./modules/github-oidc"
 
-  project_name = var.project_name
-  environment  = var.environment
-  github_org   = var.github_org
-  github_repo  = var.github_repo
+  project_name    = var.project_name
+  environment     = var.environment
+  github_org      = var.github_org
+  github_repo     = var.github_repo
+  owner_object_id = var.owner_object_id
 }
 
 # -----------------------------------------------------------------------------

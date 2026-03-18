@@ -6,20 +6,34 @@
 # -----------------------------------------------------------------------------
 
 data "azurerm_subscription" "current" {}
-data "azuread_client_config" "current" {}
 
 # --- Entra ID Application Registration ---
+# Owners are managed out-of-band (user + SP) so the SP can manage its own app via OIDC.
 resource "azuread_application" "github_actions" {
   display_name = "sp-${var.project_name}-github-actions-${var.environment}"
 
-  owners = [data.azuread_client_config.current.object_id]
+  owners = [var.owner_object_id]
+
+  # MS Graph: Application.ReadWrite.OwnedBy — lets the SP manage its own app registration
+  required_resource_access {
+    resource_app_id = "00000003-0000-0000-c000-000000000000" # Microsoft Graph
+
+    resource_access {
+      id   = "18a4783c-866b-4cc7-a460-3d5e5662c884" # Application.ReadWrite.OwnedBy
+      type = "Role"
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [owners]
+  }
 }
 
 # --- Service Principal ---
 resource "azuread_service_principal" "github_actions" {
   client_id = azuread_application.github_actions.client_id
 
-  owners = [data.azuread_client_config.current.object_id]
+  owners = [var.owner_object_id]
 }
 
 # --- Federated Credential: PR branches ---

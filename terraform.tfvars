@@ -19,5 +19,6 @@ allowed_locations = ["eastus2", "eastus"]
 # allowed_vm_skus uses defaults (B-series + small D-series) — override here if needed
 
 # GitHub Actions CI/CD
-github_org  = "mbouges"
-github_repo = "my-azure-infra"
+github_org      = "mbouges"
+github_repo     = "my-azure-infra"
+owner_object_id = "b53807db-aa6a-4e20-a1f6-7e0e93236c08"

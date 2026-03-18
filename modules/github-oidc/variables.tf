@@ -17,3 +17,8 @@ variable "github_repo" {
   description = "GitHub repository name"
   type        = string
 }
+
+variable "owner_object_id" {
+  description = "Entra ID object ID of the user who owns the app registration"
+  type        = string
+}

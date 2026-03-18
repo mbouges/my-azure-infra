@@ -77,3 +77,8 @@ variable "github_repo" {
   type        = string
   default     = "my-azure-infra"
 }
+
+variable "owner_object_id" {
+  description = "Entra ID object ID of the user who owns the OIDC app registration"
+  type        = string
+}

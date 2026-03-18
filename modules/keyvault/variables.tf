@@ -33,3 +33,13 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "owner_object_id" {
+  description = "Entra ID object ID of the user who should be Key Vault Administrator"
+  type        = string
+}
+
+variable "tenant_id" {
+  description = "Entra ID tenant ID"
+  type        = string
+}

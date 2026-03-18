@@ -5,7 +5,7 @@ output "client_id" {
 
 output "tenant_id" {
   description = "Entra ID tenant ID — set as AZURE_TENANT_ID secret"
-  value       = data.azuread_client_config.current.tenant_id
+  value       = data.azurerm_subscription.current.tenant_id
 }
 
 output "subscription_id" {
