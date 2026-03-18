@@ -33,7 +33,7 @@ resource "azuread_application_federated_identity_credential" "github_pr" {
   subject   = "repo:${var.github_org}/${var.github_repo}:pull_request"
 }
 
-# --- Federated Credential: main branch (for apply) ---
+# --- Federated Credential: main branch (for apply without environment) ---
 resource "azuread_application_federated_identity_credential" "github_main" {
   application_id = azuread_application.github_actions.id
   display_name   = "github-main"
@@ -42,6 +42,17 @@ resource "azuread_application_federated_identity_credential" "github_main" {
   audiences = ["api://AzureADTokenExchange"]
   issuer    = "https://token.actions.githubusercontent.com"
   subject   = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"
+}
+
+# --- Federated Credential: production environment (for apply with environment) ---
+resource "azuread_application_federated_identity_credential" "github_environment_production" {
+  application_id = azuread_application.github_actions.id
+  display_name   = "github-environment-production"
+  description    = "Trust GitHub Actions OIDC tokens from production environment"
+
+  audiences = ["api://AzureADTokenExchange"]
+  issuer    = "https://token.actions.githubusercontent.com"
+  subject   = "repo:${var.github_org}/${var.github_repo}:environment:production"
 }
 
 # --- Role Assignments on Subscription ---
