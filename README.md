@@ -10,9 +10,9 @@ This project implements a lightweight version of the [Azure Cloud Adoption Frame
 |---|---|---|
 | **Naming & Tagging** | Azure CAF naming convention; enforced tag taxonomy (`environment`, `managed_by`, `owner`, `cost_center`) | Free |
 | **Governance** | Azure Policy: require tags on RGs, inherit tags to resources, restrict allowed regions, restrict VM SKUs, require secure storage | Free |
-| **Security** | Microsoft Defender for Cloud (free tier), Key Vault RBAC, NSG deny-all-inbound, TLS 1.2 enforced, Trusted Launch VMs | Free |
+| **Security** | Microsoft Defender for Cloud (free tier), Key Vault RBAC, Azure Bastion Developer (no public IP), TLS 1.2 enforced, Trusted Launch VMs | Free |
 | **Identity** | Key Vault with RBAC authorization, Entra ID OIDC for CI/CD (no secrets) | Free |
-| **Networking** | VNets with subnet isolation, NSGs with deny-all-inbound default (multi-region) | Free |
+| **Networking** | VNets with subnet isolation, NSGs, Azure Bastion Developer for VM access (multi-region) | Free |
 | **Monitoring** | Log Analytics (500 MB/day cap), diagnostic settings on VNet, NSG, Key Vault | Free |
 | **Cost Management** | $10/month budget with alerts at 50%, 80%, 100% (forecasted); auto-shutdown VM | Free |
 | **State Management** | Remote Terraform state in Azure Storage with blob versioning | ~$0.02/mo |
@@ -52,13 +52,13 @@ This project implements a lightweight version of the [Azure Cloud Adoption Frame
 │  │                                                            │  │
 │  │  ┌─ vnet-personal-vm-dev-centralus (10.1.0.0/16) ──────┐  │  │
 │  │  │  └─ snet-vm-dev-centralus (10.1.1.0/24)             │  │  │
-│  │  │     NSG: nsg-vm-dev-centralus (deny all + allow RDP) │  │  │
+│  │  │     NSG: nsg-vm-dev-centralus (allow Bastion RDP)    │  │  │
 │  │  └──────────────────────────────────────────────────────┘  │  │
 │  │                                                            │  │
 │  │  VM:  vm-personal-dev-centralus (Standard_D2s_v3)         │  │
 │  │       Windows 11 24H2 Ent, Trusted Launch, auto-shutdown  │  │
-│  │  NIC: nic-vm-personal-dev-centralus                       │  │
-│  │  PIP: pip-vm-personal-dev-centralus (Static, Standard)    │  │
+│  │  NIC: nic-vm-personal-dev-centralus (private only)        │  │
+│  │  Bastion: bas-personal-vm-dev-centralus (Developer, free) │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
 │  ┌─ rg-tfstate-dev-eastus2 (Bootstrap) ──────────────────────┐  │
@@ -112,11 +112,12 @@ Key Vault with RBAC authorization enabled (`rbac_authorization_enabled = true`),
 Microsoft Defender for Cloud free tier for VMs, Storage, Key Vaults, and ARM. Security contact email notifications.
 
 ### compute
-Self-contained Windows 11 development VM in centralus. Creates its own resource group, VNet (10.1.0.0/16), subnet (10.1.1.0/24), and NSG. Features:
+Self-contained Windows 11 development VM in centralus. Creates its own resource group, VNet (10.1.0.0/16), subnet (10.1.1.0/24), NSG, and Bastion host. Features:
 - **SKU**: Standard_D2s_v3 (2 vCPU, 8 GB RAM)
 - **OS**: Windows 11 24H2 Enterprise, Trusted Launch (secure boot + vTPM)
 - **Storage**: 128 GB StandardSSD
-- **Security**: NSG deny-all-inbound + allow RDP from specific IP only
+- **Access**: Azure Bastion Developer (free) — browser-based RDP via Azure portal, no public IP
+- **Security**: No public IP, NSG allows only Bastion platform traffic (168.63.129.16)
 - **Cost control**: Auto-shutdown at 7 PM CT daily
 - **Credentials**: Admin password stored in Key Vault (eastus2)
 
@@ -167,7 +168,7 @@ Follows [Azure CAF naming convention](https://learn.microsoft.com/en-us/azure/cl
 | Subnet             | `snet-<purpose>-<env>-<region>`   | `snet-default-dev-eastus2`  |
 | NSG                | `nsg-<purpose>-<env>-<region>`    | `nsg-default-dev-eastus2`   |
 | Virtual Machine    | `vm-<workload>-<env>-<region>`    | `vm-personal-dev-centralus` |
-| Public IP          | `pip-<parent>`                    | `pip-vm-personal-dev-centralus` |
+| Bastion Host       | `bas-<workload>-vm-<env>-<region>` | `bas-personal-vm-dev-centralus` |
 | NIC                | `nic-<parent>`                    | `nic-vm-personal-dev-centralus` |
 | Storage Account    | `st<workload><env><region_abbr><suffix>`  | `sttfstatedeveus221b6` |
 | Key Vault          | `kv-<workload>-<env>-<region_abbr>` | `kv-personal-dev-eus2`    |
@@ -226,18 +227,17 @@ Create a `production` environment in **Settings → Environments** for the apply
 
 ### 6. Connect to the Dev VM
 
-Retrieve the admin password from Key Vault and RDP to the VM:
+The VM uses **Azure Bastion Developer** (free) — browser-based RDP through the Azure portal. No public IP or RDP client needed.
+
+1. Go to **Azure portal → Virtual Machines → vm-personal-dev-centralus**
+2. Click **Connect → Bastion**
+3. Enter username `azureadmin`
+4. Get the password from Key Vault:
 
 ```bash
-# Get the VM public IP
-terraform output vm_public_ip
-
-# Get the admin password from Key Vault
 az keyvault secret show --vault-name kv-personal-dev-eus2 \
   --name vm-personal-dev-centralus-admin-password --query value -o tsv
 ```
-
-Connect via RDP to the public IP with username `azureadmin`.
 
 ## Cost Estimate
 
@@ -256,10 +256,10 @@ Connect via RDP to the public IP with username `azureadmin`.
 | Entra ID App + SP       | Free         |
 | GitHub Actions (public) | Free         |
 | **VM: Standard_D2s_v3** | **~$96** (auto-shutdown reduces actual cost) |
-| Public IP (Standard)    | ~$3.65       |
+| Bastion Developer       | Free         |
 | OS Disk (128GB SSD)     | ~$9.60       |
-| **Total (VM running 24/7)** | **~$109/mo** |
-| **Total (VM ~8hr/day)**     | **~$45/mo**  |
+| **Total (VM running 24/7)** | **~$106/mo** |
+| **Total (VM ~8hr/day)**     | **~$42/mo**  |
 | **Total**               | **< $1/mo**  |
 
 ## Variables
